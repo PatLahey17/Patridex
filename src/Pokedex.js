@@ -4,36 +4,46 @@ import React, { useEffect, useState } from 'react'
 
 function Pokedex () {
 
-  let pokemonArray = [];
-
-  const [pokemonListArray, setPokemonListArray] = useState(() => {
+  let pokemonTemp = [];  
+  const [pokemonListArray, setPokemonListArray] = useState([]);
+  const [speciesListArray, setSpeciesListArray] = useState([]);
+  const [caughtThemAll, setCaughtThemAll] = useState(true)
+  
+  useEffect(() => {
+    let promisesArray = [];
+    let speciesPromiseArray = [];
       fetch('https://pokeapi.co/api/v2/pokemon?offset=0&limit=151')
         .then(response => response.json())
         .then(data => {
           data.results.forEach(pokemon => {
-            fetch(pokemon.url)
-               .then(response => response.json())
-               .then(data => {
-                 //console.log(data.name)
-                 pokemonArray.push(data);
-             });
+            const promise = fetch(pokemon.url)
+                .then(response => response.json())
+                .then(data => {
+                  return data
+                });
+             const speciesPromise = fetch("https://pokeapi.co/api/v2/pokemon-species/132")
+                .then(response => response.json())
+                .then(species => {
+                  return species
+                })
+             promisesArray.push(promise)
+             speciesPromiseArray.push(speciesPromise)
            })
+           Promise.all(speciesPromiseArray)
+            .then(results => {
+              setSpeciesListArray(results);
+              //console.log("SpeciesListArray: ", speciesListArray);
           })
-    
+           Promise.all(promisesArray)
+            .then(results => {
+              setPokemonListArray(results)        
+              })
+            })
+           // promise.all bundles the promise array to set the PokemonListArray after ALL the fetches have been made, turning the bundle of async promises into something that can work synchronously
+  }, [])
+// second argument of empty array above. This tells React that your effect doesn’t depend on any values from props or state, so it never needs to re-run. 
 
-        //methods of a class
-        //setPokemonListArry() {
-        // UNKNOWN STUFF
-        //}
-        
-       //fetch 151 pokemon names
-       //arrayOfNames
-      //fetch pokemonObjectOfname
-       //arrayOfCompletePokemonObjects
-
-  })
-  //console.log(pokemonArray)
-  
+  //useEffect((pokemonListArray) => console.log("List",pokemonListArray), [pokemonListArray])
 
   
   //line above (10) sets state, pokemonArray starts as empty array, then 
@@ -41,33 +51,36 @@ function Pokedex () {
 // {pokemonArray} for accessing the pokemon array in html
 // pokemonArray for access the pokemon array in JS
 
+  const temp = pokemonListArray.map((pokemon, index) => {
+    //console.log(pokemon);
+    console.log(speciesListArray[index])
+    let flavorPath = "speciesListArray[index].flavor_text_entries[0].flavor_text";
 
-
-
-
-  const temp = pokemonArray.map((pokemon) => {
-    return (<div class="col s12 m7">
-    <div class="card horizontal">
-      <div class="card-image">
-        <img src={"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/132.png"}/>
+    return (<div className="col s12 m7">
+    <div className="card horizontal">
+      <div className="card-image">
+        <img src={pokemon.sprites.front_shiny}/>
+        {/* asdf */}
       </div>
-      <div class="card-stacked">
-        <div class="card-content">
-        <h5 class="header">{pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h5>
-          <p>Pokemon Description</p>
+      <div className="card-stacked">
+        <div className="card-content">
+        <h5 className="header">{pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h5>
+          <p>{flavorPath}</p>
         </div>
       </div>
     </div>
     </div> );
   })
 
+
   return (
     <div className="Pokedex-Tile">
-      <h3>Hello World</h3>
+      {temp}
 
     </div>
   );
 }
+
 
 
 export default Pokedex
